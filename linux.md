@@ -28,6 +28,7 @@ rm notes.txt
 cat backup.txt
 
 
+
 # Update daftar paket
 sudo apt update 
 
