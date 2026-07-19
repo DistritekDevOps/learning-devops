@@ -1,0 +1,6 @@
+# File presentasi (di-generate, tidak perlu masuk repo)
+*.pptx
+
+# Dependensi Node.js
+node_modules/
+dist/

@@ -1,0 +1,37 @@
+services:
+  # Aplikasi Node.js — di-build dari folder ./app
+  app:
+    build: ./app
+    ports:
+      - "3001:3000"
+    environment:
+      # "db" adalah nama service di bawah — Compose otomatis membuat
+      # network bersama, jadi service saling akses lewat namanya
+      DB_HOST: db
+      DB_USER: demo
+      DB_PASSWORD: rahasia
+      DB_NAME: demo
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Database PostgreSQL
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: rahasia
+      POSTGRES_DB: demo
+    volumes:
+      # Named volume: data tetap ada walau container dihapus
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo -d demo"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  dbdata:
