@@ -6,9 +6,9 @@ Materi ini membahas dasar-dasar Docker untuk kebutuhan DevOps, mulai dari konsep
 
 ## 1. Pengenalan Docker
 
-Docker adalah platform untuk membungkus aplikasi beserta seluruh dependensinya ke dalam sebuah **container** — unit yang ringan, portabel, dan bisa dijalankan di mana saja (laptop, server, cloud) dengan hasil yang sama.
+Docker adalah platform untuk membungkus aplikasi beserta dependensi runtime-nya ke dalam sebuah **container** — unit yang ringan dan portabel. Image yang sama membantu menghasilkan environment aplikasi yang konsisten, selama platform CPU, kernel, konfigurasi runtime, dan layanan eksternalnya kompatibel.
 
-Masalah yang diselesaikan Docker: *"di laptop saya jalan, di server kok error?"* Dengan container, environment aplikasi (versi bahasa, library, konfigurasi) ikut terbawa, sehingga tidak ada lagi perbedaan antar mesin.
+Masalah yang dibantu diselesaikan Docker: *"di laptop saya jalan, di server kok error?"* Dengan container, versi bahasa dan library dapat dikemas bersama aplikasi sehingga perbedaan environment antar mesin berkurang. Konfigurasi runtime, secret, volume, jaringan, kernel host, dan arsitektur CPU tetap perlu dikelola.
 
 Beberapa istilah penting:
 
@@ -22,8 +22,8 @@ Beberapa istilah penting:
 
 | Aspek | Container | Virtual Machine |
 |---|---|---|
-| Ukuran | Puluhan MB | Puluhan GB |
-| Waktu start | Detik | Menit |
+| Ukuran | Umumnya MB hingga beberapa GB | Umumnya beberapa hingga puluhan GB |
+| Waktu start | Umumnya detik atau kurang | Umumnya detik hingga menit |
 | OS | Berbagi kernel host | Membawa OS lengkap sendiri |
 | Isolasi | Level proses | Level hardware (lebih kuat) |
 
@@ -40,15 +40,29 @@ Container jauh lebih ringan karena tidak membawa OS lengkap — hanya aplikasi d
 sudo apt update
 sudo apt install -y ca-certificates curl
 
+# Tentukan distribusi dan codename
+. /etc/os-release
+case "$ID" in
+  ubuntu|debian) DOCKER_DISTRO="$ID" ;;
+  *) echo "Distribusi ini tidak didukung oleh contoh ini: $ID"; exit 1 ;;
+esac
+DOCKER_CODENAME="${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+
 # Tambahkan GPG key resmi Docker
 sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo curl -fsSL "https://download.docker.com/linux/$DOCKER_DISTRO/gpg" \
+  -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 
 # Tambahkan repository Docker
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
-  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/$DOCKER_DISTRO
+Suites: $DOCKER_CODENAME
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
 
 # Install Docker Engine + plugin compose
 sudo apt update
@@ -61,6 +75,8 @@ Agar bisa menjalankan `docker` tanpa `sudo`:
 sudo usermod -aG docker $USER
 # Logout lalu login kembali agar grup aktif
 ```
+
+> ⚠️ Anggota grup `docker` memiliki akses setingkat root melalui Docker daemon. Berikan akses hanya kepada user tepercaya. Untuk isolasi lebih kuat, pertimbangkan [Rootless mode](https://docs.docker.com/engine/security/rootless/).
 
 Verifikasi instalasi:
 
@@ -137,6 +153,8 @@ docker logs -f webserver        # follow, seperti tail -f
 # Masuk ke dalam container yang sedang berjalan
 docker exec -it webserver bash
 
+docker exec -it webserver sh
+
 # Melihat detail konfigurasi container
 docker inspect webserver
 
@@ -150,10 +168,14 @@ docker stats
 # Menghapus semua container yang sudah berhenti
 docker container prune
 
-# Menghapus image yang tidak terpakai
+# Menghapus dangling image (layer/image tanpa tag yang tidak direferensikan)
 docker image prune
 
-# Menghapus semua yang tidak terpakai (container, image, network, cache)
+# Menghapus semua image yang tidak dipakai container
+docker image prune -a
+
+# Menghapus container, image, network, dan build cache yang tidak terpakai
+# Volume tidak ikut dihapus kecuali opsi --volumes ditambahkan
 docker system prune -a
 ```
 
@@ -175,10 +197,13 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Salin sisa kode aplikasi
-COPY . .
+COPY --chown=node:node . .
 
 # Dokumentasi port yang dipakai aplikasi
 EXPOSE 3000
+
+# Jalankan proses aplikasi sebagai user non-root bawaan image Node.js
+USER node
 
 # Perintah saat container dijalankan
 CMD ["node", "server.js"]
@@ -186,7 +211,7 @@ CMD ["node", "server.js"]
 
 Instruksi yang paling sering dipakai:
 
-- **`FROM`** — image dasar (wajib, selalu baris pertama).
+- **`FROM`** — image dasar dan wajib untuk memulai build stage. `ARG`, komentar, atau parser directive dapat ditulis sebelum `FROM`.
 - **`WORKDIR`** — direktori kerja untuk instruksi berikutnya.
 - **`COPY`** — menyalin file dari host ke image.
 - **`RUN`** — menjalankan perintah saat *build* (install dependensi, dll).
@@ -213,6 +238,7 @@ Seperti `.gitignore`, mencegah file yang tidak perlu ikut ke dalam build context
 node_modules
 .git
 .env
+secrets/
 *.log
 ```
 
@@ -253,7 +279,7 @@ docker run -d --name db \
 
 # Bind mount: memetakan folder host ke container (cocok untuk development)
 docker run -d -p 8080:80 \
-  -v $(pwd)/html:/usr/share/nginx/html \
+  --mount type=bind,source="$(pwd)/html",target=/usr/share/nginx/html \
   nginx
 
 # Melihat dan menghapus volume
@@ -270,7 +296,7 @@ Perbedaan:
 
 ## 6. Network (Jaringan Antar Container)
 
-Container dalam network yang sama bisa saling terhubung **menggunakan nama container sebagai hostname**.
+Container dalam **user-defined network** yang sama bisa saling terhubung menggunakan nama container sebagai hostname. Automatic DNS berdasarkan nama tidak tersedia dengan cara yang sama pada default bridge network.
 
 ```bash
 # Membuat network
@@ -304,26 +330,49 @@ services:
       - "3000:3000"
     environment:
       DB_HOST: db
-      DB_USER: root
-      DB_PASSWORD: rahasia
+      DB_USER: myapp
+      # Aplikasi contoh harus membaca password dari file ini.
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   db:
     image: mysql:8
     environment:
-      MYSQL_ROOT_PASSWORD: rahasia
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MYSQL_DATABASE: myapp
+      MYSQL_USER: myapp
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_root_password
+      - db_password
     volumes:
       - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/db_root_password) --silent"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
     restart: unless-stopped
 
 volumes:
   dbdata:
+
+secrets:
+  db_root_password:
+    file: ./secrets/db_root_password.txt
+  db_password:
+    file: ./secrets/db_password.txt
 ```
 
-Compose otomatis membuat network bersama, sehingga service bisa saling akses lewat namanya (`app` mengakses database dengan host `db`).
+Compose otomatis membuat network bersama, sehingga service bisa saling akses lewat namanya (`app` mengakses database dengan host `db`). Pada contoh ini, Compose juga menunggu healthcheck database berhasil sebelum memulai `app`.
+
+File di folder `secrets/` harus dibuat dengan izin akses terbatas dan tidak boleh dimasukkan ke version control. Dukungan variabel berakhiran `_FILE` tersedia pada image MySQL; aplikasi buatan sendiri perlu mengimplementasikan pembacaan secret dari file.
 
 Perintah utama:
 
@@ -401,7 +450,7 @@ Docker bisa memeriksa apakah aplikasi di dalam container benar-benar sehat, buka
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD ["node", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
 ```
 
 Atau di Compose:
@@ -411,9 +460,10 @@ services:
   app:
     image: myapp:1.0
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 5s
+      start_period: 10s
       retries: 3
 ```
 
@@ -422,7 +472,7 @@ services:
 docker ps
 ```
 
-> 💡 Kombinasikan dengan `restart: unless-stopped` (Compose) atau `--restart unless-stopped` agar container yang `unhealthy` otomatis di-restart oleh Docker.
+> 💡 Healthcheck hanya mengubah status container menjadi `healthy` atau `unhealthy`. Restart policy seperti `unless-stopped` bereaksi ketika proses container berhenti, bukan ketika statusnya berubah menjadi `unhealthy`. Jika kegagalan healthcheck harus memicu restart, gunakan orchestrator atau mekanisme pemantauan eksternal, atau buat aplikasi keluar dengan status non-zero ketika tidak dapat pulih.
 
 ---
 
@@ -444,13 +494,13 @@ docker ps
 - **Read-only filesystem** — cegah container menulis ke filesystem-nya sendiri kecuali folder yang memang dibutuhkan:
 
   ```bash
-  docker run --read-only -v /app/tmp --tmpfs /tmp myapp:1.0
+  docker run --read-only --tmpfs /app/tmp --tmpfs /tmp myapp:1.0
   ```
 
 - **Scan image dari kerentanan** yang diketahui sebelum deploy:
 
   ```bash
-  docker scout cveimage myapp:1.0
+  docker scout cves myapp:1.0
   ```
 
 - **Jangan mount Docker socket** (`-v /var/run/docker.sock:/var/run/docker.sock`) ke container kecuali benar-benar diperlukan (misalnya tool CI/CD) — ini setara memberi akses root ke seluruh host.
@@ -459,8 +509,8 @@ docker ps
 
 ## 11. Praktik Terbaik (Best Practices)
 
-1. **Gunakan image dasar yang kecil** — misalnya varian `alpine` atau `slim` (`node:22-alpine`, bukan `node:22`).
-2. **Selalu gunakan tag versi spesifik** — hindari `latest` di produksi agar hasil build dapat direproduksi.
+1. **Pilih image dasar minimal yang kompatibel** — varian `slim` sering menjadi pilihan aman. Varian Alpine lebih kecil, tetapi menggunakan `musl` dan dapat tidak kompatibel dengan dependensi yang mengharapkan `glibc`.
+2. **Gunakan tag versi spesifik atau digest** — hindari `latest` di produksi. Tag, termasuk tag versi, dapat diperbarui; pin ke digest jika membutuhkan image yang benar-benar immutable.
 3. **Manfaatkan layer cache** — salin file dependensi (`package.json`, `requirements.txt`) dan install lebih dulu, baru salin kode.
 4. **Satu proses utama per container** — pisahkan app, database, dan cache ke container masing-masing.
 5. **Jangan simpan secret di image** — jangan `COPY .env`; gunakan environment variable atau secret manager saat runtime.
@@ -482,8 +532,9 @@ docker run -d -p 8080:80 nginx   # Jalankan container di background
 docker ps                        # Container yang berjalan
 docker ps -a                     # Semua container
 docker logs -f <nama>            # Lihat log
-docker exec -it <nama> bash      # Masuk ke container
-docker stop / start <nama>       # Hentikan / jalankan
+docker exec -it <nama> sh        # Masuk ke container (lebih portabel)
+docker stop <nama>               # Hentikan container
+docker start <nama>              # Jalankan kembali container
 docker rm -f <nama>              # Hapus container
 docker rmi <image>               # Hapus image
 docker build -t app:1.0 .        # Build image dari Dockerfile
