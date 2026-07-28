@@ -18,6 +18,7 @@ env:
   IMAGE_TAG: sha-${{ github.sha }}
   CONTAINER_NAME: react-demo
   DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '8081' }}
+  DOCKER_BUILD_RECORD_UPLOAD: "false"
 
 jobs:
   build-and-push:
