@@ -142,6 +142,26 @@ jobs:
               exit 1
             fi
 
+            current_image="$(
+              docker_cmd inspect --format='{{.Image}}' "$CONTAINER_NAME"
+            )"
+            image_refs="$(
+              docker_cmd image ls "$IMAGE_NAME" \
+                --format '{{.Repository}}:{{.Tag}}'
+            )"
+
+            for image_ref in $image_refs; do
+              image_id="$(
+                docker_cmd image inspect --format='{{.Id}}' "$image_ref" \
+                  2>/dev/null ||
+                  true
+              )"
+
+              if [ -n "$image_id" ] && [ "$image_id" != "$current_image" ]; then
+                docker_cmd image rm "$image_ref"
+              fi
+            done
+
             docker_cmd image prune --force
             echo "Deploy $IMAGE_NAME:$IMAGE_TAG berhasil."
 
