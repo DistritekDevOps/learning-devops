@@ -76,6 +76,9 @@ sudo usermod -aG docker $USER
 # Logout lalu login kembali agar grup aktif
 ```
 
+
+sudo usermod -aG docker NAMA_USER_SSH
+
 > ⚠️ Anggota grup `docker` memiliki akses setingkat root melalui Docker daemon. Berikan akses hanya kepada user tepercaya. Untuk isolasi lebih kuat, pertimbangkan [Rootless mode](https://docs.docker.com/engine/security/rootless/).
 
 Verifikasi instalasi:
