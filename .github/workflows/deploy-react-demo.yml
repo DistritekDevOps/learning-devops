@@ -1,23 +1,9 @@
-# SAMPLE ONLY — file ini tidak aktif karena berada di luar .github/workflows.
-#
-# Agar dapat digunakan:
-# 1. Salin ke .github/workflows/deploy-react-demo.yml.
-# 2. Buat Repository Variable:
-#      DOCKER_USERNAME
-# 3. Buat Repository/Environment Variables:
-#      DEPLOY_PORT  (opsional, default: 8081)
-#      DEPLOY_URL   (contoh: https://react-demo.example.com)
-# 4. Buat Secrets:
-#      DOCKERHUB_TOKEN
-#      SSH_HOST
-#      SSH_USERNAME
-#      SSH_PRIVATE_KEY
-#      SSH_FINGERPRINT
-# 5. Pastikan server sudah memiliki Docker dan curl.
-
 name: Deploy React Demo
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -86,7 +72,6 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           envs: IMAGE_NAME,IMAGE_TAG,CONTAINER_NAME,DEPLOY_PORT,DOCKER_USERNAME,DOCKERHUB_TOKEN
           script: |
             set -eu
