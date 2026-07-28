@@ -14,10 +14,10 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE_NAME: ${{ vars.DOCKER_USERNAME }}/react-demo
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/react-demo
   IMAGE_TAG: sha-${{ github.sha }}
   CONTAINER_NAME: react-demo
-  DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '8081' }}
+  DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '8081' }}
 
 jobs:
   build-and-push:
@@ -35,7 +35,7 @@ jobs:
       - name: Login ke Docker Hub
         uses: docker/login-action@v4
         with:
-          username: ${{ vars.DOCKER_USERNAME }}
+          username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build dan push image
@@ -56,7 +56,7 @@ jobs:
     timeout-minutes: 15
     environment:
       name: production
-      url: ${{ vars.DEPLOY_URL }}
+      url: ${{ secrets.DEPLOY_URL }}
 
     steps:
       - name: Deploy melalui SSH
@@ -66,7 +66,7 @@ jobs:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
           CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
           DEPLOY_PORT: ${{ env.DEPLOY_PORT }}
-          DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         with:
           host: ${{ secrets.SSH_HOST }}
