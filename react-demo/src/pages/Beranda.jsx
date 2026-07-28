@@ -6,7 +6,7 @@ export default function Beranda() {
   return (
     <div className="card">
       <div className="logo">⚛️</div>
-      <h1>Halo dari React! Selamat Anda berhasil CI/CD Github Action</h1>
+      <h1>Halo dari React! !!!!!</h1>
       <p className="subtitle">
         Aplikasi ini di-build dengan Vite lalu di-serve oleh Nginx — semuanya di
         dalam container lewat multi-stage build.
