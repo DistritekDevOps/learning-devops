@@ -48,7 +48,7 @@ praktik.
 Peserta membutuhkan:
 
 - akun GitHub;
-- Git;
+- Git (lihat [materi Version Control](git.md));
 - Docker atau Podman;
 - repository ini;
 - akun Docker Hub untuk bagian deployment;
