@@ -31,17 +31,17 @@ react-demo/
 
 ## Cara Menjalankan dengan Container
 
-Perintah di bawah memakai `docker`, tapi bisa diganti `podman` — sintaksnya sama persis. Tidak perlu install Node.js di mesin — semua proses build terjadi di dalam container.
+Panduan ini menggunakan Docker. Podman mendukung banyak perintah serupa, tetapi jaringan, permission, dan penyedia Compose dapat berbeda. Tidak perlu install Node.js di mesin — semua proses build terjadi di dalam container.
 
 ```bash
 # 1. Build image (jalankan dari folder react-demo)
 docker build -t react-demo .
 
 # 2. Jalankan container: port 8081 host -> port 80 container
-docker run -d --name react-demo -p 8081:80 react-demo
+docker run -d --name react-demo -p 127.0.0.1:8081:80 react-demo
 
 # 3. Buka di browser
-open http://localhost:8081
+# Buka di browser: http://localhost:8081
 ```
 
 ## Development Tanpa Container
@@ -55,7 +55,7 @@ npm run dev     # buka http://localhost:5173
 
 - **Perpindahan halaman instan** — klik menu Beranda/Materi/Tentang; tidak ada reload karena routing terjadi di browser.
 - **Refresh di route dalam** — buka `http://localhost:8081/materi` langsung lalu refresh; tetap bekerja berkat fallback di `nginx.conf`. Coba hapus baris `try_files`-nya dan build ulang untuk melihat error 404.
-- **Ukuran image** — bandingkan `docker images`: image akhir hanya puluhan MB. Tanpa multi-stage (jika `node_modules` ikut), ukurannya bisa 10x lipat.
+- **Ukuran image** — bandingkan `docker images`: catat ukuran image runtime pada mesin Anda. Ukuran bergantung base image, platform, dan aset; jangan mengasumsikan angka tetap.
 
 ## Bersih-bersih
 
@@ -63,3 +63,7 @@ npm run dev     # buka http://localhost:5173
 docker rm -f react-demo
 docker rmi react-demo
 ```
+
+## Panduan praktik terstruktur
+
+Lihat [praktik-docker.md](../praktik-docker.md) untuk urutan latihan, hasil yang diharapkan, troubleshooting, dan cleanup.

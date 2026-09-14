@@ -1,0 +1,32 @@
+# Sample kelas. Salin ke .github/workflows/ci-node-pemula.yml di repo latihan.
+# Sertakan node-demo/server.js dan script smoke test pada path yang sama.
+name: Lab 2 - CI Node Pemula
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-node-pemula-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: Syntax dan HTTP
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Siapkan Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Periksa sintaks
+        run: node --check node-demo/server.js
+      - name: Uji HTTP dan isi respons
+        run: node samples/github-actions/smoke-node.mjs

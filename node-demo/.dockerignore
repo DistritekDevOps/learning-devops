@@ -2,3 +2,6 @@ node_modules
 *.log
 .git
 README.md
+.env
+.env.*
+secrets/

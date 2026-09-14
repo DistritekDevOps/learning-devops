@@ -3,3 +3,6 @@ dist
 *.log
 .git
 README.md
+.env
+.env.*
+secrets/

@@ -13,17 +13,17 @@ docker-demo/
 
 ## Cara Menjalankan
 
-Perintah di bawah memakai `docker`, tapi bisa diganti `podman` — sintaksnya sama persis.
+Panduan ini menggunakan Docker. Podman mendukung banyak perintah serupa, tetapi jaringan, permission, dan penyedia Compose dapat berbeda.
 
 ```bash
 # 1. Build image (jalankan dari folder docker-demo)
 docker build -t docker-demo .
 
 # 2. Jalankan container: port 8080 host -> port 80 container
-docker run -d --name demo -p 8080:80 docker-demo
+docker run -d --name demo -p 127.0.0.1:8080:80 docker-demo
 
 # 3. Buka di browser
-open http://localhost:8080
+# Buka di browser: http://localhost:8080
 ```
 
 ## Perintah Berguna Lainnya
@@ -51,7 +51,11 @@ docker rmi docker-demo
 - Untuk development tanpa build ulang, gunakan bind mount sehingga perubahan file langsung terlihat:
 
   ```bash
-  docker run -d --name demo-dev -p 8081:80 \
-    -v $(pwd)/index.html:/usr/share/nginx/html/index.html:ro \
+  docker run -d --name demo-dev -p 127.0.0.1:8082:80 \
+    -v "$(pwd)/index.html:/usr/share/nginx/html/index.html:ro" \
     nginx:alpine
   ```
+
+## Panduan praktik terstruktur
+
+Lihat [praktik-docker.md](../praktik-docker.md) untuk urutan latihan, hasil yang diharapkan, troubleshooting, dan cleanup.

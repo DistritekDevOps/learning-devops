@@ -12,6 +12,16 @@ function formatUptime(seconds) {
 const server = http.createServer((req, res) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
 
+  if (req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+  if (!["/", "/api/info"].includes(req.url)) {
+    res.writeHead(404).end("Not Found");
+    return;
+  }
+
   // Endpoint JSON, contoh API sederhana
   if (req.url === "/api/info") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -98,6 +108,6 @@ const server = http.createServer((req, res) => {
   res.end(html);
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
 });

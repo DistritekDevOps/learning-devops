@@ -17,17 +17,17 @@ node-demo/
 
 ## Cara Menjalankan
 
-Perintah di bawah memakai `docker`, tapi bisa diganti `podman` — sintaksnya sama persis.
+Panduan ini menggunakan Docker. Podman mendukung banyak perintah serupa, tetapi jaringan, permission, dan penyedia Compose dapat berbeda.
 
 ```bash
 # 1. Build image (jalankan dari folder node-demo)
 docker build -t node-demo .
 
 # 2. Jalankan container: port 3000 host -> port 3000 container
-docker run -d --name node-demo -p 3000:3000 node-demo
+docker run -d --name node-demo -p 127.0.0.1:3000:3000 node-demo
 
 # 3. Buka di browser
-open http://localhost:3000
+# Buka di browser: http://localhost:3000
 
 # Endpoint JSON
 curl http://localhost:3000/api/info
@@ -35,7 +35,7 @@ curl http://localhost:3000/api/info
 
 ## Hal yang Bisa Diamati
 
-- **Hostname** di halaman adalah ID container — jalankan container kedua di port lain (`-p 3001:3000`) dan bandingkan: satu image, dua container berbeda.
+- **Hostname** di halaman adalah ID container — jalankan container kedua di port lain (`-p 127.0.0.1:3002:3000`) dan bandingkan: satu image, dua container berbeda.
 - **Uptime** bertambah setiap refresh — bukti halaman dibuat dinamis oleh server, bukan file statis.
 - **Log request** muncul di `docker logs -f node-demo` setiap halaman dibuka.
 - **Port via environment variable** — jalankan dengan `-e PORT=4000` untuk mengubah port di dalam container.
@@ -46,3 +46,7 @@ curl http://localhost:3000/api/info
 docker rm -f node-demo
 docker rmi node-demo
 ```
+
+## Panduan praktik terstruktur
+
+Lihat [praktik-docker.md](../praktik-docker.md) untuk urutan latihan, hasil yang diharapkan, troubleshooting, dan cleanup.

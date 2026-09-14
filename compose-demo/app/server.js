@@ -11,7 +11,11 @@ const pool = new Pool({
   user: process.env.DB_USER || "demo",
   password: process.env.DB_PASSWORD || "rahasia",
   database: process.env.DB_NAME || "demo",
+  connectionTimeoutMillis: 3000,
+  query_timeout: 3000,
 });
+
+pool.on("error", (err) => console.error("Koneksi database idle gagal:", err.message));
 
 // Tunggu database siap, lalu siapkan tabel
 async function initDb(retries = 15) {
@@ -34,6 +38,15 @@ async function initDb(retries = 15) {
 }
 
 const server = http.createServer(async (req, res) => {
+  if (req.url === "/health") {
+    try {
+      await pool.query("SELECT 1");
+      res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ status: "ok" }));
+    } catch {
+      res.writeHead(503, { "Content-Type": "application/json" }).end(JSON.stringify({ status: "unavailable" }));
+    }
+    return;
+  }
   if (req.url !== "/") {
     res.writeHead(404).end("Not Found");
     return;
@@ -132,7 +145,10 @@ const server = http.createServer(async (req, res) => {
 });
 
 initDb().then(() => {
-  server.listen(PORT, () => {
+  server.listen(PORT, "0.0.0.0", () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
   });
+}).catch((err) => {
+  console.error(err.message);
+  process.exit(1);
 });

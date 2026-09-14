@@ -1,4 +1,4 @@
-# Image dasar: Nginx varian alpine (kecil, ~20 MB)
+# Image dasar: Nginx varian alpine (ringkas; ukuran bergantung tag dan platform)
 FROM nginx:alpine
 
 # Salin halaman web ke direktori default Nginx

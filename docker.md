@@ -2,6 +2,8 @@
 
 Materi ini membahas dasar-dasar Docker untuk kebutuhan DevOps, mulai dari konsep container, perintah dasar, membuat image dengan Dockerfile, hingga menjalankan multi-container dengan Docker Compose.
 
+Untuk kelas, gunakan **materi-docker-revisi.pptx** dan [panduan praktik bertahap](praktik-docker.md). Demo Compose yang dapat langsung dijalankan menggunakan PostgreSQL di `compose-demo/`; contoh MySQL di bawah adalah ilustrasi terpisah.
+
 ---
 
 ## 1. Pengenalan Docker
@@ -76,8 +78,6 @@ sudo usermod -aG docker $USER
 # Logout lalu login kembali agar grup aktif
 ```
 
-
-sudo usermod -aG docker NAMA_USER_SSH
 
 > ⚠️ Anggota grup `docker` memiliki akses setingkat root melalui Docker daemon. Berikan akses hanya kepada user tepercaya. Untuk isolasi lebih kuat, pertimbangkan [Rootless mode](https://docs.docker.com/engine/security/rootless/).
 
@@ -211,6 +211,8 @@ USER node
 # Perintah saat container dijalankan
 CMD ["node", "server.js"]
 ```
+
+`npm ci` membutuhkan `package-lock.json` yang cocok dengan `package.json`. Kedua file sudah disertakan pada demo React dan Compose.
 
 Instruksi yang paling sering dipakai:
 

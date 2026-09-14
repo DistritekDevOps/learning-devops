@@ -25,14 +25,16 @@ compose-demo/
 
 ## Cara Menjalankan
 
-Perintah di bawah memakai `docker compose`, ganti dengan `podman compose` jika memakai Podman — sintaksnya sama persis.
+Gunakan Docker Compose plugin (`docker compose`). Podman Compose memerlukan penyedia Compose terpisah; perilakunya perlu diverifikasi.
 
 ```bash
+cd compose-demo  # dari root repository
+
 # Jalankan semua service (build otomatis saat pertama kali)
 docker compose up -d
 
 # Buka di browser — refresh beberapa kali, lihat counter bertambah
-open http://localhost:3001
+# Buka di browser: http://localhost:3001
 ```
 
 ## Perintah Berguna
@@ -62,3 +64,9 @@ docker compose up -d
 docker compose down -v   # volume ikut terhapus
 docker compose up -d     # counter mulai dari 1 lagi
 ```
+
+## Panduan praktik terstruktur
+
+Lihat [praktik-docker.md](../praktik-docker.md) untuk urutan latihan, hasil yang diharapkan, troubleshooting, dan cleanup.
+
+Kredensial `demo` / `rahasia` hanya untuk latihan lokal. Database tidak dipublikasikan ke host; aplikasi dibatasi ke localhost. Jangan gunakan konfigurasi ini untuk produksi. `/health` memeriksa koneksi database tanpa menambah counter.

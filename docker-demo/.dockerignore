@@ -1,5 +1,5 @@
-node_modules
-*.log
+.git
 .env
 .env.*
 secrets/
+README.md

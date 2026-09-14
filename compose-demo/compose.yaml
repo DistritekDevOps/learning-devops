@@ -3,14 +3,21 @@ services:
   app:
     build: ./app
     ports:
-      - "3001:3000"
+      - "127.0.0.1:3001:3000"
     environment:
       # "db" adalah nama service di bawah — Compose otomatis membuat
       # network bersama, jadi service saling akses lewat namanya
       DB_HOST: db
       DB_USER: demo
+      # Kredensial khusus latihan lokal; bukan konfigurasi produksi.
       DB_PASSWORD: rahasia
       DB_NAME: demo
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      start_period: 10s
+      retries: 5
     depends_on:
       db:
         condition: service_healthy
